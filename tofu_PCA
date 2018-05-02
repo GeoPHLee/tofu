@@ -1,0 +1,32 @@
+library(mixOmics)
+library(foreach)
+library(multcomp)
+pca_for_dataframe=function(dataframe_input,ncomp,group_level){
+	dataframe_pca=pca(data_to_matrix(dataframe_input),ncomp)
+	factor_number=length(unique(group_level))
+	if(ncomp==2){
+		
+		#pch_number=sample(0:24, size = factor_number)
+		#plotIndiv(dataframe_pca,group = group_level,col.per.group = rainbow(factor_number),legend = TRUE)
+		plotIndiv(dataframe_pca,group = group_level,col.per.group = heat.colors(factor_number),legend = TRUE)
+
+		
+	}else{
+		plotIndiv(dataframe_pca,group = group_level,col.per.group = rainbow(factor_number),style = "3d",legend = TRUE,pch = "sphere")
+	}
+	return(dataframe_pca)
+}
+data_to_matrix=function(dataframe_input){
+	print("ok")
+	key_name=dataframe_input[,1]
+	print("2")
+	dataframe_input[,1]=NULL
+	out_matrix=as.matrix(dataframe_input)
+	print("3")
+	#rownames(out_matrix)=key_name
+	out_matrix=t(out_matrix)
+	return(out_matrix)
+}
+cat("Example:\n\tge_result=pca_for_dataframe(gene_expression_table)\n\ase_table=pca_for_dataframe(ase_table)")
+
+
