@@ -1,7 +1,7 @@
 cor_to_range=function(event_name_list){
   
   library(GenomicRanges)
-  ase <- unlist(strsplit(as.character(event_name_list),'\\_'))
+  ase <- unlist(strsplit(as.character(event_name_list),'\\$'))
   ase_type=ase[[1]]
   ase_event=ase[2]
   
@@ -107,8 +107,7 @@ position_praser_for_RI=function(event_list){
   strand<-all_position[5]
   five_primer_exon_mRNA_start<-unlist(strsplit(unlist(as.vector(all_position[2])),split='-'))[2]
   three_primer_exon_end<-unlist(strsplit(unlist(as.vector(all_position[4])),split='-'))[1]
-  if(strand =="+") mRNA_position<- list(chr,five_primer_exon_mRNA_start,three_primer_exon_end,strand)
-  if(strand =="-") mRNA_position<- list(chr,three_primer_exon_end,five_primer_exon_mRNA_start,strand)
+  mRNA_position<- list(chr,five_primer_exon_mRNA_start,three_primer_exon_end,strand)
   return(mRNA_position)
   
   
