@@ -2,6 +2,10 @@ inner_join2=function(x,y,by="event_name") inner_join(x,y, by="event_name")
 library(parallel)
 library(tidyverse)
 library(matrixStats)
+inter_replicate_cut_off=0.05
+need_replicate=FALSE
+delta_cutoff=0.3
+repli_name="_r"
 cl <- makeCluster(getOption("cl.cores", parallel_core))
 #clusterExport(cl,"tidyverse")
 clusterExport(cl,"inner_join2")
@@ -9,6 +13,9 @@ clusterExport(cl,"inner_join2")
 clusterExport(cl,"repli_name")
 clusterExport(cl,"need_replicate")
 clusterExport(cl,"delta_cutoff")
+#delta_cutoff=1
+clusterExport(cl,"inter_replicate_cut_off")
+#inter_replicate_cut_off=0.05
 
 clusterExport(cl,"one_sample_analysis")
 clusterExport(cl,"filter_replicates")
@@ -23,8 +30,8 @@ one_sample_analysis=function(group_condition_replicate_times){
   condition=group_condition_replicate_times[[2]]
   replicate_times=group_condition_replicate_times[[3]]
   
-  inter_replicate_cut_off=0.05
-  repli_name<-"_embryo"
+  
+  
   replicate_id<-seq(1:replicate_times)
   all_replicate_name<-paste(repli_name,replicate_id,"_",sep="")
   one_sample_name=paste(group,all_replicate_name,condition,sep="")
@@ -34,6 +41,7 @@ one_sample_analysis=function(group_condition_replicate_times){
   }else{
     all_replicates=map(one_sample_name,one_replicate_all_ase)
     one_sample=reduce(all_replicates,inner_join2)
+    #one_sample=do.call(inner_join2,all_replicates)
     one_sample_with_sd_filtered=filter_replicates(one_sample,inter_replicate_cut_off,one_sample_name)
     return(one_sample_with_sd_filtered)
   }
@@ -46,14 +54,13 @@ filter_replicates=function(sample_results,sd_cutoff,name_of_sample){
   sample_result_eve_list_exclude<-select(sample_results,-1)
   one_sample=mutate(sample_results,psi_mean=round(rowMeans(sample_result_eve_list_exclude),digits = 2),psi_sd=rowSds(as.matrix(sample_result_eve_list_exclude), na.rm=TRUE))
   sample_result_mean_sd_filtered<-one_sample[which(one_sample$psi_sd<sd_cutoff),]
-  name_of_sample<-sub("#","\\-",as.character(name_of_sample))
+  
   #  print(name_of_sample)
   #  print(names(sample_result_mean)[2])
   data_frame_length=length(sample_result_mean_sd_filtered)
   if(need_replicate==FALSE){
-    merge_name<-paste(name_of_sample,names(sample_result_mean_sd_filtered)[data_frame_length],sep="_")
-    names(sample_result_mean_sd_filtered)[data_frame_length]<-merge_name
-    sample_result_mean_sd_filtered=sample_result_mean_sd_filtered[,c(1,data_frame_length)]
+    names(sample_result_mean_sd_filtered)[data_frame_length-1]<-name_of_sample
+    sample_result_mean_sd_filtered=sample_result_mean_sd_filtered[,c(1,data_frame_length-1)]
   }else{
     sample_result_mean_sd_filtered=sample_result_mean_sd_filtered[1:(data_frame_length-2)]
   }
@@ -98,7 +105,7 @@ summary_file_process_for_one_ase=function(sample_replicate){
   orig_table_name  =  substr(file_name,1,stop = as.numeric(gregexpr("\\_events\\.miso_summary",file_name))-1)
   ase_event_type=substr(file_name,regexpr("[A-Z|a-z|0-9]+\\_events",file_name),regexpr("events",file_name)-2)
   ##mark ase type
-  psi_table=mutate(psi_table,event_name=paste(ase_event_type,event_name,sep = "_"))
+  psi_table=mutate(psi_table,event_name=paste(ase_event_type,event_name,sep = "$"))
   ##mark sample name
   sample_name=substr(orig_table_name,1,stop=as.numeric(gregexpr(ase_event_type,orig_table_name))-2)
   names(psi_table)[2]=sample_name
